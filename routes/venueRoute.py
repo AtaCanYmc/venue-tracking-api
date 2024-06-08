@@ -1,8 +1,9 @@
-import csv
-from io import BytesIO, StringIO
+import os
+import uuid
 from flask import request, Blueprint, jsonify, send_file
 from config import db
 from models.venue import Venue
+import pandas as pd
 
 venue_blueprint = Blueprint('venues', __name__)
 
@@ -25,7 +26,9 @@ def create_venue():
 
 @venue_blueprint.route('/', methods=['GET'])
 def get_venues():
-    venues = Venue.query.all()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    venues = Venue.query.paginate(page=page, per_page=per_page)
     result = []
     for venue in venues:
         venue_data = {
@@ -80,7 +83,9 @@ def delete_venue(id):
 
 @venue_blueprint.route('/download', methods=['GET'])
 def download_all_venues():
-    venues = Venue.query.all()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    venues = Venue.query.paginate(page=page, per_page=per_page)
     venue_data = [
         {
             'id': venue.id,
@@ -94,16 +99,15 @@ def download_all_venues():
         for venue in venues
     ]
 
-    si = StringIO()
-    cw = csv.DictWriter(si, fieldnames=venue_data[0].keys())
-    cw.writeheader()
-    cw.writerows(venue_data)
+    df = pd.DataFrame(venue_data)
+    filename = f"csv-files/{uuid.uuid4()}.csv"
+    df.to_csv(filename, index=False)
 
-    output = BytesIO()
-    output.write(si.getvalue().encode('utf-8'))
-    output.seek(0)
-
-    return send_file(output, mimetype='text/csv', as_attachment=True)
+    try:
+        return send_file(filename, mimetype='text/csv', as_attachment=True)
+    finally:
+        if os.path.exists(filename):
+            os.remove(filename)
 
 
 
