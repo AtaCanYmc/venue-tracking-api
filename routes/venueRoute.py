@@ -1,4 +1,5 @@
 import os
+import random
 import uuid
 from flask import request, Blueprint, jsonify, send_file
 from sqlalchemy import text
@@ -146,3 +147,38 @@ def get_venues_of_a_city(city_id):
 
     return jsonify(result), 200
 
+
+@venue_blueprint.route('/random-from-city/<int:city_id>', methods=['GET'])
+def get_random_venue_from_a_city(city_id):
+    city = City.query.get_or_404(city_id)
+    city_center_lat = city.lat
+    city_center_long = city.long
+    city_radius_km = city.diameter / 2
+
+    query = text("""
+        SELECT *,
+        (6371 * acos(cos(radians(:lat)) * cos(radians(lat)) * cos(radians(long) - radians(:long)) + sin(radians(:lat)) * sin(radians(lat)))) AS distance
+        FROM venue
+        WHERE (6371 * acos(cos(radians(:lat)) * cos(radians(lat)) * cos(radians(long) - radians(:long)) + sin(radians(:lat)) * sin(radians(lat)))) <= :radius
+    """)
+
+    parameters = {'lat': city_center_lat, 'long': city_center_long, 'radius': city_radius_km}
+    venues = db.session.execute(query, parameters).fetchall()
+
+    if not venues:
+        return jsonify({'message': 'No venues found within the specified radius.'}), 404
+
+    random_venue = random.choice(venues)
+
+    venue_data = {
+        'id': random_venue.id,
+        'name': random_venue.name,
+        'cityName': city.name,
+        'lat': random_venue.lat,
+        'long': random_venue.long,
+        'description': random_venue.description,
+        'type': random_venue.type,
+        'iconNum': random_venue.iconNum,
+    }
+
+    return jsonify(venue_data), 200
