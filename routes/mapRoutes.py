@@ -18,7 +18,7 @@ def map_of_all_venues():
     for venue in venues:
         folium.Marker(
             [venue.lat, venue.long],
-            popup=venue.description,
+            popup=f'| {venue.name} |\n\n{venue.description}',
             tooltip=venue.name,
             icon=get_folium_icon_from_id(venue.iconNum)
         ).add_to(map)
