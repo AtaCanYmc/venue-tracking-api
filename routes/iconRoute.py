@@ -10,6 +10,8 @@ def get_icon_path_from_id(id):
         return 'icons/coffee-cup.png'
     elif id == 2:
         return 'icons/beer.png'
+    else: # id 3
+        return 'icons/restaurant.png'
 
 
 def get_folium_icon_from_id(id):
