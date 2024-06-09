@@ -1,10 +1,10 @@
 from flask import Flask
 from config import Config
 from config import db
+from routes.cityRoute import city_blueprint
 from routes.venueRoute import venue_blueprint
 from routes.iconRoute import icon_blueprint
 from routes.mapRoutes import map_blueprint
-
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -16,6 +16,8 @@ with app.app_context():
 app.register_blueprint(venue_blueprint, url_prefix='/api/v1/venues')
 app.register_blueprint(icon_blueprint, url_prefix='/api/v1/venue-icons')
 app.register_blueprint(map_blueprint, url_prefix='/api/v1/venue-maps')
+app.register_blueprint(city_blueprint, url_prefix='/api/v1/cities')
+
 
 if __name__ == '__main__':
     app.run()
